@@ -1,7 +1,6 @@
 > **الهدف من الـ Section ده:**  
 >  هتفهم إزاي الـ Logical Link Control (LLC) هي الجزء "الذكي" من الـ Data Link Layer، إزاي بتنظم البيانات وتتحكم في الأخطاء والـ Flow، وهتتعرف على بنية الـ LLC PDU بالتفصيل عشان تقدر تفهمها لما تشوفها في أي Packet Capture.
 
-# Logical Link Control (LLC) Sublayer
 
 ## Table of Contents
 
