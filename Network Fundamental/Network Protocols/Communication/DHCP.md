@@ -4,7 +4,7 @@
 
 ## Table of Contents
 
-- [Overview](#overview)
+- [Overview](#overview) 
 - [How DHCP Works (DORA Process)](#how-dhcp-works-dora-process)
 - [DHCP Message Types](#dhcp-message-types)
 - [Static vs Dynamic Addressing](#static-vs-dynamic-addressing)
