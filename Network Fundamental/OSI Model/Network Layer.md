@@ -1,5 +1,5 @@
 > **الهدف من الـ Section ده:**  
-> الهدف من الـ Section ده: هتفهم إزاي الـ Network Layer بتوصل البيانات بين شبكات مختلفة تمامًا (مش بس جوه نفس الشبكة زي Layer 2)، هتتعرف على أهم بروتوكولاتها (IP, ARP, RARP, ICMP, IGMP) وبروتوكولات الـ Routing (RIP, OSPF, BGP)، وهتقدر تربط كل ده بأشهر هجمات الشبكة زي IP Spoofing وBGP Hijacking.
+> الهدف من الـ Section ده: هتفهم إزاي الـ Network Layer بتوصل البيانات بين شبكات مختلفة تمامًا عن طريق الـ Logical Addressing والـ Routing، هتتعرف على أهم مسؤولياتها وبروتوكولاتها، وهتقدر تفرق بين الـ Routing والـ Flooding.
 
 
 ## Table of Contents
@@ -8,12 +8,6 @@
 - [Key Responsibilities of the Network Layer](#key-responsibilities-of-the-network-layer)
 - [How the Network Layer Works](#how-the-network-layer-works)
 - [Protocols Operating at the Network Layer](#protocols-operating-at-the-network-layer)
-  - [1. IP (Internet Protocol)](#1-ip-internet-protocol)
-  - [2. ARP (Address Resolution Protocol)](#2-arp-address-resolution-protocol)
-  - [3. RARP (Reverse Address Resolution Protocol)](#3-rarp-reverse-address-resolution-protocol)
-  - [4. ICMP (Internet Control Message Protocol)](#4-icmp-internet-control-message-protocol)
-  - [5. IGMP (Internet Group Message Protocol)](#5-igmp-internet-group-message-protocol)
-  - [Other Network Layer Protocols](#other-network-layer-protocols)
 - [Routing Protocols](#routing-protocols)
 - [Advantages of the Network Layer](#advantages-of-the-network-layer)
 - [Limitations of the Network Layer](#limitations-of-the-network-layer)
@@ -67,6 +61,9 @@ flowchart TB
     NL --> Nat["NAT"]
 ```
 
+> [!TIP]
+> فكر في الفرق بين **Forwarding** و **Routing** كده: الـ Routing هو "التخطيط" - تحديد أفضل مسار ممكن مقدمًا وتخزينه في جدول (Routing Table). الـ Forwarding هو "التنفيذ" - القرار الفعلي السريع لكل Packet بيوصل لأنهي Interface يتحرك بناءً على الجدول ده.
+
 ---
 
 ## How the Network Layer Works
@@ -97,110 +94,34 @@ sequenceDiagram
     end
 ```
 
+> [!IMPORTANT]
+> خطوة الـ **Fragmentation** بتحصل لو حجم الـ Packet أكبر من الـ **MTU (Maximum Transmission Unit)** بتاع أي شبكة في المسار. المشكلة إن كل جزء (Fragment) بيحتاج يتجمع تاني عند الوجهة النهائية بس، وده بيزود الحمل على المعالجة (Processing Overhead) ومصدر شائع لمشاكل الأداء.
+
 ---
 
 ## Protocols Operating at the Network Layer
 
-### 1. IP (Internet Protocol)
-
-IP بيساعد على تحديد هوية كل جهاز على الشبكة بشكل فريد، ومسؤول عن نقل البيانات من Node لـ Node تانية في الشبكة. IP هو بروتوكول **Connectionless**، يعني **مبيضمنش توصيل البيانات** - عشان كده بروتوكولات أعلى زي TCP بتستخدم للتأكيد على وصول البيانات.
-
-| Version | Details |
-|---|---|
-| **IPv4** | عنونة 32-bit، 4 حقول رقمية مفصولة بنقط، ممكن تتظبط يدوي أو عن طريق DHCP، مفيهاش أمان مدمج (لا Authentication ولا Encryption)، مقسمة لـ 5 كلاسات (A, B, C, D, E) |
-| **IPv6** | عنونة 128-bit، 8 حقول Hexadecimal مفصولة بـ Colon، بتوفر أمان أعلى (Authentication وEncryption)، بتدعم End-to-End Connection Integrity، ونطاق عناوين أوسع بكتير من IPv4 |
-
-> [!IMPORTANT]
-> غياب أي Authentication أو Encryption مدمجة في **IPv4** هو السبب الجذري ليه هجمات زي **IP Spoofing** سهلة نسبيًا - أي جهاز يقدر يدعي إن الـ Source IP بتاعه هو أي عنوان تاني من غير أي تحقق مدمج في البروتوكول نفسه.
-
-### 2. ARP (Address Resolution Protocol)
-
-ARP بيحول العنوان المنطقي (IP Address) للعنوان الفيزيائي (MAC Address). لما جهاز يحتاج يعرف الـ MAC Address بتاع جهاز تاني، بيبعت **ARP Query Packet** فيه الـ IP والـ MAC بتاعته، وبس الـ IP بتاع الجهاز المطلوب.
-
-الـ Packet ده بيوصل لكل الأجهزة على الشبكة، لكن بس الجهاز صاحب الـ IP المطلوب هو اللي بيرد بالـ MAC بتاعه.
-
-### How ARP Works
-
-1. الجهاز بيعمل Broadcast لـ ARP Inquiry Packet فيه الـ IP المطلوب
-2. كل الأجهزة على الشبكة بتستقبل الـ Packet، لكن بس الجهاز صاحب الـ IP ده بيرد
-3. الجهاز صاحب الـ IP بيضيف الـ Physical Address للـ Header ويبعته للمرسل، وبيتسجل في الـ Cache
-
-```mermaid
-sequenceDiagram
-    participant Host as Requesting Host
-    participant Network as Local Network (Broadcast)
-    participant Target as Target Host (Owner of IP)
-
-    Host->>Network: ARP Request - Who has this IP?
-    Network->>Target: Broadcast reaches Target
-    Target->>Host: ARP Reply - Here is my MAC Address
-    Host->>Host: Store in ARP Cache
-```
-
-> [!NOTE]
-> عشان يقلل حمل الـ Traffic الناتج عن تكرار الـ ARP Requests، الأنظمة اللي بتستخدم ARP بتحتفظ بـ **Cache** لآخر ربط تم بين IP وMAC.
-
-### Types of ARP Entries
-
-| Type | Description |
-|---|---|
-| Static Entry | بتتضاف يدويًا باستخدام ARP Command Utility |
-| Dynamic Entry | بتتكون أوتوماتيك لما جهاز يعمل Broadcast لرسالته، وبتتحذف دوريًا (مش دائمة) |
-
-### 3. RARP (Reverse Address Resolution Protocol)
-
-RARP بيشتغل عكس ARP - بيحول الـ MAC Address (Physical) للـ IP Address (Logical). بيوفر للأنظمة والتطبيقات طريقة تعرف بيها الـ IP بتاعها من DNS أو Router. البروتوكول ده أصبح **Largely Obsolete** حاليًا واتستبدل ببروتوكولات أحدث زي DHCP.
-
-### How RARP Works
-
-- بيشتغل على مستوى الـ Network Access Layer
-- كل مستخدم على الشبكة له عنوانين مختلفين: MAC (فيزيائي) وIP (منطقي)
-- أي كمبيوتر عادي على الشبكة يقدر يشتغل كـ RARP Server، بشرط يكون محتفظ بكل الـ MAC Addresses المرتبطة بـ IPs
-- العميل بيبعت RARP Request باستخدام الـ Physical Address بتاعه والـ Ethernet Broadcast Address، والسيرفر بيرد بالـ IP Address
-
-```mermaid
-sequenceDiagram
-    participant Client
-    participant RARPServer as RARP Server
-
-    Client->>RARPServer: RARP Request (using MAC + Broadcast Address)
-    RARPServer->>Client: RARP Reply - Here is your IP Address
-```
-
-### 4. ICMP (Internet Control Message Protocol)
-
-ICMP جزء من مجموعة بروتوكولات IP، وهو بروتوكول لتقارير الأخطاء والتشخيص الشبكي (Error Reporting and Network Diagnostic). أي Feedback في الشبكة بيتبلغ للـ Host المخصص، ولو حصل أي خطأ بيتبلغ لـ ICMP.
-
-### Types of ICMP Messages
-
-| Type | Description |
-|---|---|
-| Error Message | بتوضح المشاكل اللي واجهها الـ Host أو الـ Routers أثناء معالجة IP Packet |
-| Query Message | بيستخدمها الـ Host عشان يحصل على معلومات من Router أو Host تاني |
-
-> [!NOTE]
-> ICMP بروتوكول **Connectionless** زي UDP - مش محتاج أي اتصال يتأسس مع الجهاز الهدف قبل ما يبعت الرسالة، على عكس TCP اللي محتاج Handshake قبل أي تبادل بيانات.
-
-### 5. IGMP (Internet Group Message Protocol)
-
-IGMP بروتوكول اتصال Multicasting، بيستخدم الموارد بكفاءة أثناء بث الرسائل والبيانات. بيستخدمه الأجهزة والـ Routers اللي بتدعم شبكات IP للتواصل بنظام Multicast.
-
-### How IGMP Works
-
-- الأجهزة اللي بتدعم Dynamic Multicasting وMulticast Groups تقدر تستخدم IGMP
-- الـ Host يقدر ينضم أو يخرج من مجموعة الـ Multicast، وممكن كمان يضيف أو يشيل مستخدمين من المجموعة
-- بيستخدم بين الـ Host والـ Local Multicast Router - وقت إنشاء مجموعة Multicast، الـ Destination IP بتاع الـ Packet بيتغير لعنوان مجموعة الـ Multicast
-
-> [!TIP]
-> IGMP مستخدم بشكل واسع في تطبيقات زي **Streaming Media, Web Conferencing, وGaming**، لأن الاتصال فيها بيكون من مرسل واحد أو أكتر لمجموعة مستقبلين في نفس الوقت.
-
-### Other Network Layer Protocols
-
 | Protocol | Purpose |
 |---|---|
+| IP (Internet Protocol - IPv4/IPv6) | Provides logical addressing and delivers packets across networks; IPv6 offers a larger address space and better efficiency |
+| ICMP (Internet Control Message Protocol) | Sends error reports and diagnostic messages (e.g., destination unreachable, ping) |
+| ARP (Address Resolution Protocol) | Maps IP addresses to MAC addresses within a local network |
+| RARP (Reverse Address Resolution Protocol) | Retrieves a device's IP address using its MAC address (largely obsolete) |
 | NAT (Network Address Translation) | Converts private IP addresses to public IPs, conserving addresses and improving security |
 | IPSec (Internet Protocol Security) | Secures IP communication through encryption and authentication |
 | MPLS (Multiprotocol Label Switching) | Uses labels to forward packets efficiently and manage traffic |
+
+```mermaid
+flowchart TB
+    Protocols["Network Layer Protocols"]
+    Protocols --> IP["IP - Addressing & Delivery"]
+    Protocols --> ICMP["ICMP - Diagnostics & Errors"]
+    Protocols --> ARP["ARP - IP to MAC"]
+    Protocols --> RARP["RARP - MAC to IP (Obsolete)"]
+    Protocols --> NAT["NAT - Private to Public IP"]
+    Protocols --> IPSec["IPSec - Encryption & Authentication"]
+    Protocols --> MPLS["MPLS - Label-Based Forwarding"]
+```
 
 ---
 
@@ -212,16 +133,8 @@ IGMP بروتوكول اتصال Multicasting، بيستخدم الموارد ب
 | OSPF (Open Shortest Path First) | Link-State | Link-state protocol that computes the shortest path using network topology |
 | BGP (Border Gateway Protocol) | Path-Vector | Path-vector protocol that routes data between autonomous systems on the internet |
 
-```mermaid
-flowchart TB
-    Routing["Routing Protocols"]
-    Routing --> RIP["RIP - Distance-Vector (Hop Count)"]
-    Routing --> OSPF["OSPF - Link-State (Shortest Path)"]
-    Routing --> BGP["BGP - Path-Vector (Between Autonomous Systems)"]
-```
-
 > [!IMPORTANT]
-> **BGP** هو البروتوكول اللي بيربط الإنترنت كله فعليًا مع بعضه (بيوجه الـ Traffic بين الـ Autonomous Systems المختلفة زي شركات الاتصالات وISPs)، وأي مشكلة أو هجوم عليه (زي BGP Hijacking) ممكن يأثر على نطاق واسع جدًا من الإنترنت.
+> **BGP** هو البروتوكول اللي بيربط الإنترنت كله فعليًا مع بعضه (بيوجه الـ Traffic بين الـ Autonomous Systems المختلفة زي شركات الاتصالات وISPs)، وأي مشكلة أو هجوم عليه ممكن يأثر على نطاق واسع جدًا من الإنترنت.
 
 ---
 
@@ -241,6 +154,9 @@ flowchart TB
 - Routers may drop packets under heavy load, leading to possible data loss
 - Fragmentation increases processing overhead and may affect performance
 
+> [!WARNING]
+> بما إن الـ Network Layer **مفيهاش Flow Control مدمج**، فمسؤولية التحكم في معدل الإرسال ومنع الـ Congestion بتقع بالكامل على طبقات أعلى (زي TCP في الـ Transport Layer). فهم النقطة دي مهم عشان تعرف تحدد صح مصدر أي مشكلة أداء - هل هي في مستوى الـ Routing نفسه ولا في التحكم بمعدل الإرسال فوقه؟
+
 ---
 
 ## Difference Between Routing and Flooding
@@ -253,6 +169,25 @@ flowchart TB
 | Traffic is less in Routing | Traffic is more in Flooding |
 | Duplicate packets are not present | Duplicate packets are present |
 
+```mermaid
+flowchart LR
+    subgraph RoutingDiagram["Routing"]
+        RS["Source"] -->|Single Best Path via Table| RD["Destination"]
+    end
+```
+
+```mermaid
+flowchart LR
+    subgraph FloodingDiagram["Flooding"]
+        FS["Source"] --> FN1["Neighbor 1"]
+        FS --> FN2["Neighbor 2"]
+        FS --> FN3["Neighbor 3"]
+        FN1 --> FD["Destination"]
+        FN2 --> FD
+        FN3 --> FD
+    end
+```
+
 > [!NOTE]
 > الـ **Flooding** بيبعت نسخة من الـ Packet لكل الـ Interfaces ما عدا اللي جاله منها، وده بيضمن وصول البيانات (حتى لو مسارات كتير اتقطعت)، لكن على حساب حمل هائل من الـ Traffic المكرر مقارنة بالـ Routing العادي اللي بيعتمد على جدول محدد.
 
@@ -260,28 +195,27 @@ flowchart TB
 
 ## SOC Analyst Perspective
 
+> [!IMPORTANT]
+> الـ Network Layer هي المستوى اللي بيحصل فيه معظم قرارات الـ Traffic Filtering الأساسية (Firewalls, Router ACLs)، فمهم تفهم مسؤولياتها كويس عشان تعرف تحلل أي Log أو حدث مرتبط بالـ Routing أو الـ IP Addressing بشكل صحيح.
+
+### Common Threats at the Network Layer
+
 | Threat | Description | MITRE ATT&CK Reference |
 |---|---|---|
-| IP Spoofing | تزوير الـ Source IP Address لانتحال هوية جهاز آخر أو إخفاء مصدر الهجوم | T1584 / T1090 - Proxy |
-| ICMP Flood / Ping Flood | إغراق الهدف بعدد ضخم من ICMP Echo Requests لاستنزاف الموارد | T1499 - Network Denial of Service |
-| Smurf Attack | استغلال ICMP Broadcast مع IP Spoofing لتضخيم هجوم DoS على الضحية | T1498 - Network Denial of Service |
-| ARP Spoofing (at L2/L3 boundary) | تزوير ربط IP-MAC لعمل Man-in-the-Middle | T1557 - Adversary-in-the-Middle |
-| BGP Hijacking | إعلان مسارات BGP مزيفة لتحويل مسار Traffic كامل عبر شبكة المهاجم | T1584.004 - Compromise Infrastructure: Server |
-| Fragmentation-based Evasion | تقسيم الحزم بشكل متعمد لتفادي أدوات IDS/IPS اللي مش بتعيد تجميع الحزم بنفس طريقة الهدف | T1027 - Obfuscated Files or Information |
-
-> [!WARNING]
-> **Smurf Attack** مثال كلاسيكي على استغلال IGMP/ICMP Broadcast: المهاجم بيبعت ICMP Echo Request بـ Source IP مزور (بتاع الضحية) لعنوان Broadcast لشبكة كاملة، فكل الأجهزة على الشبكة دي بترد على الضحية في نفس الوقت، وده بيغرقها بحجم Traffic ضخم من غير ما تكون هي أصلاً اللي طلبت أي حاجة.
+| IP Spoofing | تزوير الـ Source IP Address لانتحال هوية جهاز آخر أو إخفاء مصدر الهجوم | T1090 - Proxy |
+| ICMP-based DoS (Ping/Smurf Flood) | إغراق الهدف بحزم ICMP لاستنزاف الموارد | T1498 / T1499 - Network/Endpoint Denial of Service |
+| Routing Table Manipulation | التلاعب بجداول الـ Routing (زي BGP Hijacking) لتحويل مسار الـ Traffic | T1584.004 - Compromise Infrastructure: Server |
+| Fragmentation-based Evasion | تقسيم الحزم بشكل متعمد لتفادي أدوات IDS/IPS | T1027 - Obfuscated Files or Information |
 
 ### Detection & Best Practices
 
-- تفعيل **Ingress/Egress Filtering** على الـ Routers لمنع الحزم اللي بيها Source IP مزور من الأساس
-- مراقبة حجم غير طبيعي من ICMP Traffic كمؤشر على Ping Flood أو Smurf Attack
-- استخدام **BGP Monitoring Tools** لاكتشاف أي إعلانات مسارات (Route Announcements) غير متوقعة أو غير مصرح بيها
-- تحليل **Packet Fragmentation Patterns** غير الطبيعية اللي ممكن تكون محاولة تفادي لأدوات الـ IDS/IPS
-- مراجعة **NAT Logs** بانتظام لفهم أي اتصالات خارجية غير معتادة من الشبكة الداخلية
+- تفعيل **Ingress/Egress Filtering** على الـ Routers لمنع الحزم اللي بيها Source IP مزور
+- مراقبة **Routing Table Changes** غير المتوقعة، خصوصًا في بيئات بتستخدم BGP
+- مراجعة **NAT وFirewall Logs** بانتظام لفهم أنماط الاتصال الداخلي والخارجي
+- استخدام أدوات تحليل الـ Fragmentation لاكتشاف محاولات تفادي الـ IDS/IPS
 
 > [!TIP]
-> لو لاحظت زيادة مفاجئة وضخمة في ICMP Traffic متجهة لجهاز واحد معين من مصادر متعددة جدًا في نفس الوقت، ده نمط كلاسيكي لـ **Smurf Attack** أو **DDoS via ICMP**، ويستاهل تحقيق فوري وتفعيل إجراءات الـ Rate Limiting.
+> لما تحلل أي حادثة أمنية على مستوى الشبكة، اسأل نفسك: "المشكلة دي في الـ Addressing (مين اللي بيتكلم)، ولا في الـ Routing (المسار اللي البيانات ماشية فيه)؟" - التفريق ده بيوجهك بسرعة لمصدر الـ Log الصح (Firewall/ACLs للـ Addressing، Routing Protocol Logs للـ Routing).
 
 ---
 
@@ -289,7 +223,7 @@ flowchart TB
 
 - الـ **Network Layer** (Layer 3) مسؤولة عن **Logical Addressing, Routing, وEnd-to-End Delivery** عبر شبكات مترابطة
 - أهم مسؤولياتها: Logical Addressing, Packetization, Forwarding, Routing, Fragmentation/Reassembly, Subnetting, NAT
-- أهم بروتوكولاتها: **IP (IPv4/IPv6), ARP, RARP, ICMP, IGMP**، بالإضافة لـ NAT, IPSec, MPLS
+- أهم بروتوكولاتها: **IP (IPv4/IPv6), ICMP, ARP, RARP**، بالإضافة لـ NAT, IPSec, MPLS
 - بروتوكولات الـ **Routing**: RIP (Distance-Vector), OSPF (Link-State), BGP (Path-Vector - العمود الفقري للإنترنت)
 - **الفرق بين Routing وFlooding**: Routing أكفأ وأقل Traffic، Flooding أكتر موثوقية لكن أعلى حمل وبيه Duplicate Packets
-- من ناحية الـ SOC: أهم التهديدات هي **IP Spoofing, ICMP/Smurf Attacks (T1498/T1499), BGP Hijacking (T1584.004)**، وأدوات زي Ingress Filtering وBGP Monitoring أساسية للحماية
+- من ناحية الـ SOC: أهم التهديدات هي **IP Spoofing, ICMP-based DoS, وRouting Table Manipulation**، وأدوات زي Ingress Filtering ومراقبة جداول الـ Routing أساسية للحماية
