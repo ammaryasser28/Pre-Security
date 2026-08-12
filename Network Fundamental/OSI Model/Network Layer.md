@@ -1,5 +1,5 @@
 > **الهدف من الـ Section ده:**  
-> الهدف من الـ Section ده: هتفهم إزاي الـ Network Layer بتوصل البيانات بين شبكات مختلفة تمامًا عن طريق الـ Logical Addressing والـ Routing، هتتعرف على أهم مسؤولياتها وبروتوكولاتها، وهتقدر تفرق بين الـ Routing والـ Flooding.
+> هتفهم إزاي الـ Network Layer بتوصل البيانات بين شبكات مختلفة تمامًا عن طريق الـ Logical Addressing والـ Routing، هتتعرف على أهم مسؤولياتها وبروتوكولاتها، وهتقدر تفرق بين الـ Routing والـ Flooding.
 
 
 ## Table of Contents
