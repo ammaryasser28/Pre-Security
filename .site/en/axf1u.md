@@ -219,9 +219,6 @@ Contains most of the user-level applications and tools.
 
 ## /var — Variable Data
 
-> [!NOTE]
-> This directory is one of the most important in the system, but it was missing from the original source material, so I completed it with standard reference information to make the picture complete.
-
 Stores data that changes constantly while the system is running (Variable Data).
 
 - System logs
